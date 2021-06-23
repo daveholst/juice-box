@@ -1,3 +1,7 @@
+# arduino secrets
+arduino_secrets.h
+secrets.h
+
 # mac files
 .DS_Store
 # Logs
