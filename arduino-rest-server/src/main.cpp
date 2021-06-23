@@ -3,6 +3,8 @@
 #include <WebServer.h>
 const char *SSID = SECRET_SSID;
 const char *PWD = SECRET_PWD;
+const int greenLed = 2;
+
 // Web server running on port 80
 WebServer server(80);
 void connectToWiFi()
@@ -23,7 +25,22 @@ void connectToWiFi()
   Serial.println(WiFi.localIP());
 }
 
-const int greenLed = 2;
+void handleLedOn()
+{
+  digitalWrite(greenLed, HIGH); // turn on the LED
+  delay(5000);                  // wait for half a second or 500 milliseconds
+  digitalWrite(greenLed, LOW);  // turn off the LED
+  delay(5000);
+
+  server.send(200, "application/json", "{message: led turned on!!!!}");
+}
+void setup_routing()
+{
+  server.on("/ledon", HTTP_POST, handleLedOn);
+
+  // start server
+  server.begin();
+}
 
 void setup()
 {
@@ -38,17 +55,14 @@ void setup()
   connectToWiFi();
 
   // setup_task();
-  // setup_routing();
+  setup_routing();
   // Initialize Neopixel
   // pixels.begin();
 }
 
 void loop()
 {
-  // server.handleClient();
+  server.handleClient();
   // led test
-  digitalWrite(greenLed, HIGH); // turn on the LED
-  delay(500);                   // wait for half a second or 500 milliseconds
-  digitalWrite(greenLed, LOW);  // turn off the LED
-  delay(500);                   // wait for half a second or 500 milliseconds
+  // wait for half a second or 500 milliseconds
 }
