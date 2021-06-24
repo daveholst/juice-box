@@ -3,7 +3,9 @@
 #include <WebServer.h>
 const char *SSID = SECRET_SSID;
 const char *PWD = SECRET_PWD;
-const int greenLed = 2;
+const int statusLed = 2;
+const int greenLed = 12;
+const int blueLed = 14;
 
 // Web server running on port 80
 WebServer server(80);
@@ -27,12 +29,13 @@ void connectToWiFi()
 
 void handleLedOn()
 {
+  server.send(200, "application/json", "{message: running green blue!!!!}");
   digitalWrite(greenLed, HIGH); // turn on the LED
-  delay(5000);                  // wait for half a second or 500 milliseconds
+  delay(1000);                  // wait for half a second or 500 milliseconds
   digitalWrite(greenLed, LOW);  // turn off the LED
-  delay(5000);
-
-  server.send(200, "application/json", "{message: led turned on!!!!}");
+  digitalWrite(blueLed, HIGH);  // turn off the LED
+  delay(1000);
+  digitalWrite(blueLed, LOW); // turn on the LED
 }
 void setup_routing()
 {
@@ -45,6 +48,7 @@ void setup_routing()
 void setup()
 {
   pinMode(greenLed, OUTPUT);
+  pinMode(blueLed, OUTPUT);
   Serial.begin(9600);
 
   // Sensor setup
