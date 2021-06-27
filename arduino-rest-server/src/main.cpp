@@ -1,11 +1,16 @@
 #include "secrets.h"
 #include <WiFi.h>
 #include <WebServer.h>
+#include <ArduinoJson.h>
+
 const char *SSID = SECRET_SSID;
 const char *PWD = SECRET_PWD;
 const int statusLed = 2;
 const int greenLed = 12;
 const int blueLed = 14;
+// JSON data buffer
+StaticJsonDocument<250> jsonDocument;
+char buffer[250];
 
 // Web server running on port 80
 WebServer server(80);
@@ -29,12 +34,22 @@ void connectToWiFi()
 
 void handleLedOn()
 {
-  server.send(200, "application/json", "{message: running green blue!!!!}");
+  if (server.hasArg("plain") == false)
+  {
+    //handle error here
+  }
+  String body = server.arg("plain");
+  deserializeJson(jsonDocument, body);
+  int time = jsonDocument["time"];
+  String timeString = String(time);
+  String messageToSend = String("{\"message\": \"running greeen blue for: " + timeString + "ms\" }");
+
+  server.send(200, "application/json", messageToSend);
   digitalWrite(greenLed, HIGH); // turn on the LED
-  delay(1000);                  // wait for half a second or 500 milliseconds
+  delay(time);                  // wait for half a second or 500 milliseconds
   digitalWrite(greenLed, LOW);  // turn off the LED
   digitalWrite(blueLed, HIGH);  // turn off the LED
-  delay(1000);
+  delay(time);
   digitalWrite(blueLed, LOW); // turn on the LED
 }
 void setup_routing()
