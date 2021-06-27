@@ -5,9 +5,13 @@
 
 const char *SSID = SECRET_SSID;
 const char *PWD = SECRET_PWD;
+// Led Pins
 const int statusLed = 2;
 const int greenLed = 12;
 const int blueLed = 14;
+// Relay Pins
+const int relay1 = 27;
+
 // JSON data buffer
 StaticJsonDocument<250> jsonDocument;
 char buffer[250];
@@ -45,12 +49,14 @@ void handleLedOn()
   String messageToSend = String("{\"message\": \"running greeen blue for: " + timeString + "ms\" }");
 
   server.send(200, "application/json", messageToSend);
+  digitalWrite(relay1, LOW);    // turn on relay 1
   digitalWrite(greenLed, HIGH); // turn on the LED
   delay(time);                  // wait for half a second or 500 milliseconds
   digitalWrite(greenLed, LOW);  // turn off the LED
   digitalWrite(blueLed, HIGH);  // turn off the LED
   delay(time);
   digitalWrite(blueLed, LOW); // turn on the LED
+  digitalWrite(relay1, HIGH); // turn off relay 1
 }
 void setup_routing()
 {
@@ -62,6 +68,11 @@ void setup_routing()
 
 void setup()
 {
+  // pin setup
+  // relays
+  pinMode(relay1, OUTPUT);
+  digitalWrite(relay1, HIGH); // start relat1 LOW
+  //leds
   pinMode(greenLed, OUTPUT);
   pinMode(blueLed, OUTPUT);
   Serial.begin(9600);
