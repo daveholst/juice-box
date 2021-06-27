@@ -11,6 +11,7 @@ const int greenLed = 12;
 const int blueLed = 14;
 // Relay Pins
 const int relay1 = 27;
+const int relay2 = 26;
 
 // JSON data buffer
 StaticJsonDocument<250> jsonDocument;
@@ -52,11 +53,14 @@ void handleLedOn()
   digitalWrite(relay1, LOW);    // turn on relay 1
   digitalWrite(greenLed, HIGH); // turn on the LED
   delay(time);                  // wait for half a second or 500 milliseconds
+  digitalWrite(relay1, HIGH);   // turn off relay 1
   digitalWrite(greenLed, LOW);  // turn off the LED
   digitalWrite(blueLed, HIGH);  // turn off the LED
+  digitalWrite(relay2, LOW);    // turn off relay 1
+
   delay(time);
   digitalWrite(blueLed, LOW); // turn on the LED
-  digitalWrite(relay1, HIGH); // turn off relay 1
+  digitalWrite(relay2, HIGH); // turn off relay 1
 }
 void setup_routing()
 {
@@ -71,7 +75,10 @@ void setup()
   // pin setup
   // relays
   pinMode(relay1, OUTPUT);
-  digitalWrite(relay1, HIGH); // start relat1 LOW
+  digitalWrite(relay1, HIGH); // !start relat1 HIGH (Which is off????)
+  pinMode(relay2, OUTPUT);
+  digitalWrite(relay2, HIGH); // !start relat1 HIGH (Which is off????)
+
   //leds
   pinMode(greenLed, OUTPUT);
   pinMode(blueLed, OUTPUT);
