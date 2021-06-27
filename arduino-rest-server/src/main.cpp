@@ -48,20 +48,37 @@ void handleLedOn()
   int time = jsonDocument["time"];
   String timeString = String(time);
   String messageToSend = String("{\"message\": \"running greeen blue for: " + timeString + "ms\" }");
+  if (jsonDocument["relay"] == 1)
+  {
+    digitalWrite(relay1, LOW);    // turn on relay 1
+    digitalWrite(greenLed, HIGH); // turn on the LED
+    delay(time);                  // wait for half a second or 500 milliseconds
+    digitalWrite(relay1, HIGH);   // turn off relay 1
+    digitalWrite(greenLed, LOW);  // turn off the LED
+  }
+  if (jsonDocument["relay"] == 2)
+  {
+    digitalWrite(relay2, LOW);    // turn on relay 1
+    digitalWrite(greenLed, HIGH); // turn on the LED
+    delay(time);                  // wait for half a second or 500 milliseconds
+    digitalWrite(relay2, HIGH);   // turn off relay 1
+    digitalWrite(greenLed, LOW);  // turn off the LED
+  }
 
-  server.send(200, "application/json", messageToSend);
-  digitalWrite(relay1, LOW);    // turn on relay 1
-  digitalWrite(greenLed, HIGH); // turn on the LED
-  delay(time);                  // wait for half a second or 500 milliseconds
-  digitalWrite(relay1, HIGH);   // turn off relay 1
-  digitalWrite(greenLed, LOW);  // turn off the LED
-  digitalWrite(blueLed, HIGH);  // turn off the LED
-  digitalWrite(relay2, LOW);    // turn off relay 1
+  // server.send(200, "application/json", messageToSend);
+  // digitalWrite(relay1, LOW);    // turn on relay 1
+  // digitalWrite(greenLed, HIGH); // turn on the LED
+  // delay(time);                  // wait for half a second or 500 milliseconds
+  // digitalWrite(relay1, HIGH);   // turn off relay 1
+  // digitalWrite(greenLed, LOW);  // turn off the LED
+  // digitalWrite(blueLed, HIGH);  // turn off the LED
+  // digitalWrite(relay2, LOW);    // turn off relay 1
 
-  delay(time);
-  digitalWrite(blueLed, LOW); // turn on the LED
-  digitalWrite(relay2, HIGH); // turn off relay 1
+  // delay(time);
+  // digitalWrite(blueLed, LOW); // turn on the LED
+  // digitalWrite(relay2, HIGH); // turn off relay 1
 }
+
 void setup_routing()
 {
   server.on("/ledon", HTTP_POST, handleLedOn);
