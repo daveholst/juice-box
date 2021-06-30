@@ -2,7 +2,8 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ArduinoJson.h>
-#include <WebSocketsClient.h>
+// #include <WebSocketsClient.h>
+#include <ArduinoWebsockets.h>
 
 const char *SSID = SECRET_SSID;
 const char *PWD = SECRET_PWD;
@@ -17,8 +18,12 @@ const int relay2 = 26;
 // Allocate the JSON document
 StaticJsonDocument<200> doc;
 
+const char *websockets_server_host = "192.168.10.98"; //Enter server adress
+const uint16_t websockets_server_port = 3000;         // Enter server port
+using namespace websockets;
+
 // Web Sockets client
-WebSocketsClient webSocket;
+WebsocketsClient client;
 
 void connectToWiFi()
 {
@@ -38,11 +43,12 @@ void connectToWiFi()
   Serial.println(WiFi.localIP());
 }
 
-void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
-{
-  const String message = doc["test-message"];
-  Serial.print(message);
-}
+// void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
+// {
+//   // const String message = doc["testMessage"];
+//   const String message = doc["testMessage"];
+//   Serial.print(message);
+// }
 
 void setup()
 {
@@ -61,16 +67,61 @@ void setup()
   connectToWiFi();
 
   // server address, port, and URL path
-  webSocket.begin("192.168.10.98", 3000, "/");
+  // client.begin("192.168.10.98", 3000, "/");
 
   // event handler
-  webSocket.onEvent(webSocketEvent);
+  // client.onEvent(webSocketEvent);
 
   // try ever 5000 again if connection has failed
-  webSocket.setReconnectInterval(5000);
+  // client.setReconnectInterval(5000);
+  Serial.println("Connected to Wifi, Connecting to server.");
+  // try to connect to Websockets server
+  bool connected = client.connect(websockets_server_host, websockets_server_port, "/");
+  if (connected)
+  {
+    Serial.println("Connected!");
+    client.send("Hello Server");
+  }
+  else
+  {
+    Serial.println("Not Connected!");
+  }
+
+  // run callback when messages are received
+  client.onMessage([&](WebsocketsMessage message)
+                   {
+                     String body = message.data();
+                     // Deserialize the JSON document
+                     DeserializationError error = deserializeJson(doc, body);
+
+                     // Test if parsing succeeds.
+                     if (error)
+                     {
+                       Serial.print(F("deserializeJson() failed: "));
+                       Serial.println(error.f_str());
+                       return;
+                     }
+                     if (doc["device"] == "relay-1" && doc["action"] == "turn_on")
+                     {
+                       digitalWrite(relay1, LOW);
+                     }
+                     if (doc["device"] == "relay-1" && doc["action"] == "turn_off")
+                     {
+                       digitalWrite(relay1, HIGH);
+                     }
+
+                     const char *device = doc["device"];
+                     Serial.print("Got Message: ");
+                     Serial.println(device);
+                   });
 }
 
 void loop()
 {
-  webSocket.loop();
+  // let the websockets client check for incoming messages
+  if (client.available())
+  {
+    client.poll();
+  }
+  delay(500);
 }
