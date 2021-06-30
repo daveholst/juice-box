@@ -80,7 +80,7 @@ void setup()
   if (connected)
   {
     Serial.println("Connected!");
-    client.send("Hello Server");
+    // client.send("Hello Server");
   }
   else
   {
@@ -101,11 +101,11 @@ void setup()
                        Serial.println(error.f_str());
                        return;
                      }
-                     if (doc["device"] == "relay-1" && doc["action"] == "turn_on")
+                     if (doc["device"] == "relay-1" && doc["engaged"] == true)
                      {
                        digitalWrite(relay1, LOW);
                      }
-                     if (doc["device"] == "relay-1" && doc["action"] == "turn_off")
+                     if (doc["device"] == "relay-1" && doc["engaged"] == false)
                      {
                        digitalWrite(relay1, HIGH);
                      }
