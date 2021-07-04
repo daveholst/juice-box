@@ -1,12 +1,19 @@
 #include "secrets.h"
 #include <WiFi.h>
-#include <WebServer.h>
-#include <ArduinoJson.h>
+// #include <WebServer.h>
+// #include <ArduinoJson.h>
 // #include <WebSocketsClient.h>
-#include <ArduinoWebsockets.h>
+// #include <ArduinoWebsockets.h>
+#include <PubSubClient.h>
 
 const char *SSID = SECRET_SSID;
 const char *PWD = SECRET_PWD;
+const char *MQTTUSR = SECRET_MQTTUSR;
+const char *MQTTPWD = SECRET_MQTTPWD;
+const char *MQTTSERVER = SECRET_MQTTSERVER;
+// Device Identifier
+const char *DEVICE = "juicebox_1";
+
 // Led Pins
 const int statusLed = 2;
 const int greenLed = 12;
@@ -15,15 +22,12 @@ const int blueLed = 14;
 const int relay1 = 27;
 const int relay2 = 26;
 
-// Allocate the JSON document
-StaticJsonDocument<200> doc;
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
 
-const char *websockets_server_host = "192.168.10.98"; //Enter server adress
-const uint16_t websockets_server_port = 3000;         // Enter server port
-using namespace websockets;
-
-// Web Sockets client
-WebsocketsClient client;
+// long lastMsg = 0;
+// char msg[50];
+// int value = 0;
 
 void connectToWiFi()
 {
@@ -43,12 +47,65 @@ void connectToWiFi()
   Serial.println(WiFi.localIP());
 }
 
-// void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
-// {
-//   // const String message = doc["testMessage"];
-//   const String message = doc["testMessage"];
-//   Serial.print(message);
-// }
+void callback(char *topic, byte *message, unsigned int length)
+{
+  Serial.print("Message arrived on topic: ");
+  Serial.print(topic);
+  Serial.print(". Message: ");
+  String messageIn;
+
+  for (int i = 0; i < length; i++)
+  {
+    Serial.print((char)message[i]);
+    messageIn += (char)message[i];
+  }
+  Serial.println();
+
+  // Feel free to add more if statements to control more GPIOs with MQTT
+
+  // If a message is received on the topic esp32/output, you check if the message is either "on" or "off".
+  // Changes the output state according to the message
+  if (String(topic) == "juicebox1/relay1")
+  {
+    Serial.print("Changing output to ");
+    if (messageIn == "on")
+    {
+      Serial.println("on");
+      digitalWrite(relay1, LOW);
+    }
+    else if (messageIn == "off")
+    {
+      Serial.println("off");
+      digitalWrite(relay1, HIGH);
+    }
+  }
+}
+void reconnect()
+{
+  // Loop until we're reconnected
+  while (!mqttClient.connected())
+  {
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+    if (mqttClient.connect(DEVICE, MQTTUSR, MQTTPWD))
+    {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      mqttClient.publish("juicebox1", "hello world");
+      // ... and resubscribe
+      mqttClient.subscribe("juicebox1/relay1");
+      mqttClient.subscribe("juicebox1/relay2");
+    }
+    else
+    {
+      Serial.print("failed, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
 
 void setup()
 {
@@ -65,63 +122,24 @@ void setup()
   Serial.begin(9600);
 
   connectToWiFi();
-
-  // server address, port, and URL path
-  // client.begin("192.168.10.98", 3000, "/");
-
-  // event handler
-  // client.onEvent(webSocketEvent);
-
-  // try ever 5000 again if connection has failed
-  // client.setReconnectInterval(5000);
-  Serial.println("Connected to Wifi, Connecting to server.");
-  // try to connect to Websockets server
-  bool connected = client.connect(websockets_server_host, websockets_server_port, "/");
-  if (connected)
-  {
-    Serial.println("Connected!");
-    // client.send("Hello Server");
-  }
-  else
-  {
-    Serial.println("Not Connected!");
-  }
-
-  // run callback when messages are received
-  client.onMessage([&](WebsocketsMessage message)
-                   {
-                     String body = message.data();
-                     // Deserialize the JSON document
-                     DeserializationError error = deserializeJson(doc, body);
-
-                     // Test if parsing succeeds.
-                     if (error)
-                     {
-                       Serial.print(F("deserializeJson() failed: "));
-                       Serial.println(error.f_str());
-                       return;
-                     }
-                     if (doc["device"] == "relay-1" && doc["engaged"] == true)
-                     {
-                       digitalWrite(relay1, LOW);
-                     }
-                     if (doc["device"] == "relay-1" && doc["engaged"] == false)
-                     {
-                       digitalWrite(relay1, HIGH);
-                     }
-
-                     const char *device = doc["device"];
-                     Serial.print("Got Message: ");
-                     Serial.println(device);
-                   });
+  // setup MQTT client
+  mqttClient.setServer(MQTTSERVER, 1883);
+  mqttClient.setCallback(callback);
+  //   client.setServer(MQTTSERVER, 1883);
+  //   client.setCallback(mqttHandler);
+  //   if (client.connect(DEVICE, MQTTUSR, MQTTPWD))
+  //   {
+  //     client.publish("test", "juicebox - hello world!");
+  //     client.subscribe("juicebox1");
+  //   }
+  //   client.publish("juicbox1", "do i work???");
 }
 
 void loop()
 {
-  // let the websockets client check for incoming messages
-  if (client.available())
+  if (!mqttClient.connected())
   {
-    client.poll();
+    reconnect();
   }
-  delay(500);
+  mqttClient.loop();
 }
