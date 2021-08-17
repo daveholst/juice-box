@@ -3,15 +3,12 @@
 The juicebox is an ESP32 based device that is used for controlling reticulation solenoid valves via relays. This repo has a few branches of different technologies that have been testing, a rPi based ReST API, a system using webSockets and a MQTT client solution. I ended up settling on MQTT as it provided the best performance with the least overhead.
 ## Table of Contents:
 
-- [Live Deploy](#Live-Deploy)
 - [Technology Stack](#Technology-Stack)
 - [License](#License)
 - [Tests](#Tests)
 - [Questions](#Questions)
 
-## Live Deploy
 
-A live deploy of this app can be found on GitHub Pages at: https://daveholst.github.io/portfolio-react/
 
 
 ## Technology Stack
