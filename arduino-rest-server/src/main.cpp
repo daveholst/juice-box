@@ -61,13 +61,9 @@ void callback(char *topic, byte *message, unsigned int length)
   }
   Serial.println();
 
-  // Feel free to add more if statements to control more GPIOs with MQTT
-
-  // If a message is received on the topic esp32/output, you check if the message is either "on" or "off".
-  // Changes the output state according to the message
   if (String(topic) == "juicebox1/relay1")
   {
-    Serial.print("Changing output to ");
+    Serial.print("Changing Relay 1 output to ");
     if (messageIn == "on")
     {
       Serial.println("on");
@@ -77,6 +73,20 @@ void callback(char *topic, byte *message, unsigned int length)
     {
       Serial.println("off");
       digitalWrite(relay1, HIGH);
+    }
+  }
+  if (String(topic) == "juicebox1/relay2")
+  {
+    Serial.print("Changing Relay 2 output to ");
+    if (messageIn == "on")
+    {
+      Serial.println("on");
+      digitalWrite(relay2, LOW);
+    }
+    else if (messageIn == "off")
+    {
+      Serial.println("off");
+      digitalWrite(relay2, HIGH);
     }
   }
 }
@@ -93,8 +103,8 @@ void reconnect()
       // Once connected, publish an announcement...
       mqttClient.publish("juicebox1", "hello world");
       // ... and resubscribe
-      mqttClient.subscribe("juicebox1/relay1");
-      mqttClient.subscribe("juicebox1/relay2");
+      mqttClient.subscribe("juicebox1/#");
+      // mqttClient.subscribe("juicebox1/relay2");
     }
     else
     {
@@ -125,14 +135,6 @@ void setup()
   // setup MQTT client
   mqttClient.setServer(MQTTSERVER, 1883);
   mqttClient.setCallback(callback);
-  //   client.setServer(MQTTSERVER, 1883);
-  //   client.setCallback(mqttHandler);
-  //   if (client.connect(DEVICE, MQTTUSR, MQTTPWD))
-  //   {
-  //     client.publish("test", "juicebox - hello world!");
-  //     client.subscribe("juicebox1");
-  //   }
-  //   client.publish("juicbox1", "do i work???");
 }
 
 void loop()
