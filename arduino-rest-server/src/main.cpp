@@ -5,6 +5,7 @@
 // #include <WebSocketsClient.h>
 // #include <ArduinoWebsockets.h>
 #include <PubSubClient.h>
+#include <HX711.h>
 
 const char *SSID = SECRET_SSID;
 const char *PWD = SECRET_PWD;
@@ -21,10 +22,14 @@ const int blueLed = 14;
 // Relay Pins
 const int relay1 = 27;
 const int relay2 = 26;
+// Load Cell Pins
+const int loadcellDout = 23;
+const int loadcellSck = 22;
+
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
-
+HX711 scale;
 // long lastMsg = 0;
 // char msg[50];
 // int value = 0;
@@ -117,14 +122,27 @@ void reconnect()
   }
 }
 
+void printScales()
+{
+  if (scale.wait_ready_timeout(1000)) {
+    long reading = scale.read();
+    Serial.print("HX711 reading: ");
+    Serial.println(reading);
+  } else {
+    Serial.println("HX711 not found :(");
+  }
+
+  delay(1500);
+}
+
 void setup()
 {
   // pin setup
   // relays
   pinMode(relay1, OUTPUT);
-  digitalWrite(relay1, HIGH); // !start relat1 HIGH (Which is off????)
+  digitalWrite(relay1, HIGH); // !start relay1 HIGH (Which is off????)
   pinMode(relay2, OUTPUT);
-  digitalWrite(relay2, HIGH); // !start relat1 HIGH (Which is off????)
+  digitalWrite(relay2, HIGH); // !start relay1 HIGH (Which is off????)
 
   //leds
   pinMode(greenLed, OUTPUT);
@@ -135,6 +153,9 @@ void setup()
   // setup MQTT client
   mqttClient.setServer(MQTTSERVER, 1883);
   mqttClient.setCallback(callback);
+
+  // start scales
+  scale.begin(loadcellDout, loadcellSck);
 }
 
 void loop()
@@ -144,4 +165,5 @@ void loop()
     reconnect();
   }
   mqttClient.loop();
+  printScales();
 }
