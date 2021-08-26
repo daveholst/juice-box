@@ -25,7 +25,9 @@ const int relay2 = 26;
 // Load Cell Pins
 const int loadcellDout = 23;
 const int loadcellSck = 22;
-
+// mqtt payloads
+String weight_str;
+char weight[50];
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
@@ -125,7 +127,13 @@ void reconnect()
 void printScales()
 {
   if (scale.wait_ready_timeout(1000)) {
-    long reading = scale.read();
+    // long reading = scale.read();
+    long reading = scale.get_units(10) + 254;
+    String readingTempString = String(reading);
+    char readingMessage[50];
+    readingTempString.toCharArray(readingMessage, readingTempString.length() + 1);
+    // String messageToSend = String("{\"tankWeight\": \" "readingString" \" }");
+    mqttClient.publish("juicebox1/tankWeight", readingMessage);
     Serial.print("HX711 reading: ");
     Serial.println(reading);
   } else {
@@ -156,6 +164,10 @@ void setup()
 
   // start scales
   scale.begin(loadcellDout, loadcellSck);
+  // calibration
+  scale.set_scale(-209.95);
+  scale.set_offset(254);
+  // scale.tare();
 }
 
 void loop()
