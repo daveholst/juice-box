@@ -177,5 +177,5 @@ void loop()
     reconnect();
   }
   mqttClient.loop();
-  printScales();
+  // printScales();     //not using - will try again later!
 }
