@@ -1,11 +1,14 @@
 #include "secrets.h"
 #include <WiFi.h>
+#include <ESPmDNS.h>
+
 // #include <WebServer.h>
 // #include <ArduinoJson.h>
 // #include <WebSocketsClient.h>
 // #include <ArduinoWebsockets.h>
 #include <PubSubClient.h>
 #include <HX711.h>
+#include <ArduinoOTA.h>
 
 const char *SSID = SECRET_SSID;
 const char *PWD = SECRET_PWD;
@@ -14,6 +17,8 @@ const char *MQTTPWD = SECRET_MQTTPWD;
 const char *MQTTSERVER = SECRET_MQTTSERVER;
 // Device Identifier
 const char *DEVICE = "juicebox_1";
+// device hostname
+String hostname = "juicebox_1";
 
 // Led Pins
 const int statusLed = 2;
@@ -36,8 +41,12 @@ HX711 scale;
 // char msg[50];
 // int value = 0;
 
+
+
+
 void connectToWiFi()
 {
+  WiFi.setHostname(hostname.c_str());;
   Serial.print("Connecting to ");
   Serial.println(SSID);
 
@@ -168,6 +177,40 @@ void setup()
   scale.set_scale(-22.076);
   scale.set_offset(1222);
   scale.tare();
+
+  // OTA Setup
+  ArduinoOTA.setHostname("juicebox_1");
+  ArduinoOTA
+    .onStart([]() {
+      String type;
+      if (ArduinoOTA.getCommand() == U_FLASH)
+        type = "sketch";
+      else // U_SPIFFS
+        type = "filesystem";
+
+      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+      Serial.println("Start updating " + type);
+    })
+    .onEnd([]() {
+      Serial.println("\nEnd");
+    })
+    .onProgress([](unsigned int progress, unsigned int total) {
+      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    })
+    .onError([](ota_error_t error) {
+      Serial.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+      else if (error == OTA_END_ERROR) Serial.println("End Failed");
+    });
+
+  ArduinoOTA.begin();
+
+  Serial.println("Ready");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
 }
 
 void loop()
@@ -176,6 +219,7 @@ void loop()
   {
     reconnect();
   }
+  ArduinoOTA.handle();
   mqttClient.loop();
   printScales();     //not using - will try again later!
 }
