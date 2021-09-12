@@ -128,7 +128,7 @@ void printScales()
 {
   if (scale.wait_ready_timeout(1000)) {
     // long reading = scale.read();
-    long reading = scale.get_units(10) + 254;
+    long reading = scale.get_units(10);
     String readingTempString = String(reading);
     char readingMessage[50];
     readingTempString.toCharArray(readingMessage, readingTempString.length() + 1);
@@ -165,9 +165,9 @@ void setup()
   // start scales
   scale.begin(loadcellDout, loadcellSck);
   // calibration
-  scale.set_scale(-209.95);
-  scale.set_offset(254);
-  // scale.tare();
+  scale.set_scale(-22.076);
+  scale.set_offset(1222);
+  scale.tare();
 }
 
 void loop()
@@ -177,5 +177,5 @@ void loop()
     reconnect();
   }
   mqttClient.loop();
-  // printScales();     //not using - will try again later!
+  printScales();     //not using - will try again later!
 }
