@@ -27,6 +27,7 @@ const int blueLed = 14;
 // Relay Pins
 const int relay1 = 27;
 const int relay2 = 26;
+const int relay3 = 25;
 // Load Cell Pins
 const int loadcellDout = 23;
 const int loadcellSck = 22;
@@ -105,6 +106,20 @@ void callback(char *topic, byte *message, unsigned int length)
       digitalWrite(relay2, HIGH);
     }
   }
+    if (String(topic) == "juicebox1/relay3")
+  {
+    Serial.print("Changing Relay 3 output to ");
+    if (messageIn == "on")
+    {
+      Serial.println("on");
+      digitalWrite(relay3, LOW);
+    }
+    else if (messageIn == "off")
+    {
+      Serial.println("off");
+      digitalWrite(relay3, HIGH);
+    }
+  }
 }
 void reconnect()
 {
@@ -119,7 +134,9 @@ void reconnect()
       // Once connected, publish an announcement...
       mqttClient.publish("juicebox1", "hello world");
       // ... and resubscribe
-      mqttClient.subscribe("juicebox1/#");
+      mqttClient.subscribe("juicebox1/relay1");
+      mqttClient.subscribe("juicebox1/relay2");
+      mqttClient.subscribe("juicebox1/relay3");
       // mqttClient.subscribe("juicebox1/relay2");
     }
     else
@@ -137,7 +154,7 @@ void printScales()
 {
   if (scale.wait_ready_timeout(1000)) {
     // long reading = scale.read();
-    long reading = scale.get_units(10);
+    long reading = scale.get_units(15);
     String readingTempString = String(reading);
     char readingMessage[50];
     readingTempString.toCharArray(readingMessage, readingTempString.length() + 1);
@@ -149,7 +166,7 @@ void printScales()
     Serial.println("HX711 not found :(");
   }
 
-  delay(1500);
+  // delay(1500);
 }
 
 void setup()
@@ -160,7 +177,8 @@ void setup()
   digitalWrite(relay1, HIGH); // !start relay1 HIGH (Which is off????)
   pinMode(relay2, OUTPUT);
   digitalWrite(relay2, HIGH); // !start relay1 HIGH (Which is off????)
-
+  pinMode(relay3, OUTPUT);
+  digitalWrite(relay3, HIGH); // !start relay1 HIGH (Which is off????)
   //leds
   pinMode(greenLed, OUTPUT);
   pinMode(blueLed, OUTPUT);
@@ -174,9 +192,9 @@ void setup()
   // start scales
   scale.begin(loadcellDout, loadcellSck);
   // calibration
-  scale.set_scale(-22.076);
-  scale.set_offset(1222);
-  scale.tare();
+  scale.set_scale(-22.3);
+  scale.set_offset(-576184);
+  // scale.tare();
 
   // OTA Setup
   ArduinoOTA.setHostname("juicebox_1");
@@ -219,7 +237,8 @@ void loop()
   {
     reconnect();
   }
+  printScales();
   ArduinoOTA.handle();
   mqttClient.loop();
-  printScales();     //not using - will try again later!
+     //not using - will try again later!
 }
