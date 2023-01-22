@@ -16,13 +16,15 @@ const char *DEVICE = "juicebox_2";
 String hostname = "juicebox_2";
 
 // Led Pins
-const int statusLed = 2;
-const int greenLed = 12;
-const int blueLed = 14;
+// const int statusLed = 2;
+// const int greenLed = 12;
+// const int blueLed = 14;
 // Relay Pins
-const int relay1 = 27;
-const int relay2 = 26;
-const int relay3 = 25;
+// const int relay2 = 4;
+// const int relay1 = 5;
+// const int relay3 = 0;
+const int relay8 = 5, relay7 = 4, relay6 = 0, relay5 = 15;
+const int relay4 = 13, relay3 = 12, relay2 = 14, relay1 = 16;
 // Load Cell Pins
 // const int loadcellDout = 23;
 // const int loadcellSck = 22;
@@ -77,12 +79,12 @@ void callback(char *topic, byte *message, unsigned int length)
     if (messageIn == "on")
     {
       Serial.println("on");
-      digitalWrite(relay1, LOW);
+      digitalWrite(relay1, HIGH);
     }
     else if (messageIn == "off")
     {
       Serial.println("off");
-      digitalWrite(relay1, HIGH);
+      digitalWrite(relay1, LOW);
     }
   }
   if (String(topic) == "juicebox2/relay2")
@@ -91,12 +93,12 @@ void callback(char *topic, byte *message, unsigned int length)
     if (messageIn == "on")
     {
       Serial.println("on");
-      digitalWrite(relay2, LOW);
+      digitalWrite(relay2, HIGH);
     }
     else if (messageIn == "off")
     {
       Serial.println("off");
-      digitalWrite(relay2, HIGH);
+      digitalWrite(relay2, LOW);
     }
   }
   if (String(topic) == "juicebox2/relay3")
@@ -105,12 +107,12 @@ void callback(char *topic, byte *message, unsigned int length)
     if (messageIn == "on")
     {
       Serial.println("on");
-      digitalWrite(relay3, LOW);
+      digitalWrite(relay3, HIGH);
     }
     else if (messageIn == "off")
     {
       Serial.println("off");
-      digitalWrite(relay3, HIGH);
+      digitalWrite(relay3, LOW);
     }
   }
 }
@@ -170,27 +172,20 @@ void setup()
   // pin setup
   // relays
   pinMode(relay1, OUTPUT);
-  digitalWrite(relay1, HIGH); // !start relay1 HIGH (Which is off????)
+  // digitalWrite(relay1, HIGH); // !start relay1 HIGH (Which is off????)
   pinMode(relay2, OUTPUT);
-  digitalWrite(relay2, HIGH); // !start relay1 HIGH (Which is off????)
+  // digitalWrite(relay2, HIGH); // !start relay1 HIGH (Which is off????)
   pinMode(relay3, OUTPUT);
-  digitalWrite(relay3, HIGH); // !start relay1 HIGH (Which is off????)
+  // digitalWrite(relay3, HIGH); // !start relay1 HIGH (Which is off????)
   // leds
-  pinMode(greenLed, OUTPUT);
-  pinMode(blueLed, OUTPUT);
+  // pinMode(greenLed, OUTPUT);
+  // pinMode(blueLed, OUTPUT);
   Serial.begin(9600);
 
   connectToWiFi();
   // setup MQTT client
   mqttClient.setServer(MQTTSERVER, 1883);
   mqttClient.setCallback(callback);
-
-  // start scales
-  // scale.begin(loadcellDout, loadcellSck);
-  // calibration
-  // scale.set_scale(-22.3);
-  // scale.set_offset(-576184);
-  // scale.tare();
 
   // OTA Setup
   ArduinoOTA.setHostname("juicebox_2");
