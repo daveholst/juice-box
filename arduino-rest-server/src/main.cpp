@@ -2,7 +2,6 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <PubSubClient.h>
-// #include <HX711.h>
 #include <ArduinoOTA.h>
 
 const char *SSID = SECRET_SSID;
@@ -19,18 +18,10 @@ String hostname = "juicebox_2";
 // const int statusLed = 2;
 // const int greenLed = 12;
 // const int blueLed = 14;
+
 // Relay Pins
-// const int relay2 = 4;
-// const int relay1 = 5;
-// const int relay3 = 0;
 const int relay8 = 5, relay7 = 4, relay6 = 0, relay5 = 15;
 const int relay4 = 13, relay3 = 12, relay2 = 14, relay1 = 16;
-// Load Cell Pins
-// const int loadcellDout = 23;
-// const int loadcellSck = 22;
-// mqtt payloads
-String weight_str;
-char weight[50];
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
@@ -52,11 +43,26 @@ void connectToWiFi()
   {
     Serial.print(".");
     delay(500);
-    // we can even make the ESP32 to sleep
   }
 
   Serial.print("Connected. IP: ");
   Serial.println(WiFi.localIP());
+}
+
+bool checkStringIsNumerical(String myString)
+{
+  uint16_t Numbers = 0;
+
+  for (uint16_t i = 0; i < myString.length(); i++)
+  {
+    if (myString[i] == '0' || myString[i] == '1' || myString[i] == '2' || myString[i] == '3' || myString[i] == '4' || myString[i] == '5' ||
+        myString[i] == '6' || myString[i] == '7' || myString[i] == '8' || myString[i] == '9')
+    {
+      Numbers++;
+    }
+  }
+
+  return Numbers == myString.length() ? true : false;
 }
 
 void callback(char *topic, byte *message, unsigned int length)
@@ -65,17 +71,16 @@ void callback(char *topic, byte *message, unsigned int length)
   Serial.print(topic);
   Serial.print(". Message: ");
   String messageIn;
-
+  // Generate/read the message - not sure if this is required
   for (int i = 0; i < length; i++)
   {
     Serial.print((char)message[i]);
     messageIn += (char)message[i];
   }
-  Serial.println();
-
-  if (String(topic) == "juicebox2/relay1")
+  // Check if it is a relay control message
+  if (String(topic).endsWith("/fert1"))
   {
-    Serial.print("Changing Relay 1 output to ");
+    Serial.print("Changing Fertiliser 1 output to ");
     if (messageIn == "on")
     {
       Serial.println("on");
@@ -86,35 +91,72 @@ void callback(char *topic, byte *message, unsigned int length)
       Serial.println("off");
       digitalWrite(relay1, LOW);
     }
-  }
-  if (String(topic) == "juicebox2/relay2")
-  {
-    Serial.print("Changing Relay 2 output to ");
-    if (messageIn == "on")
+    // if message is an Int run for that amount of time
+    else if (checkStringIsNumerical(messageIn))
     {
-      Serial.println("on");
-      digitalWrite(relay2, HIGH);
-    }
-    else if (messageIn == "off")
-    {
-      Serial.println("off");
-      digitalWrite(relay2, LOW);
+      int runTime = messageIn.toInt();
+      digitalWrite(relay1, HIGH);
+      delay(runTime * 1000);
+      digitalWrite(relay1, LOW);
     }
   }
-  if (String(topic) == "juicebox2/relay3")
-  {
-    Serial.print("Changing Relay 3 output to ");
-    if (messageIn == "on")
-    {
-      Serial.println("on");
-      digitalWrite(relay3, HIGH);
-    }
-    else if (messageIn == "off")
-    {
-      Serial.println("off");
-      digitalWrite(relay3, LOW);
-    }
-  }
+
+  // if (String(topic) == "juicebox2/relay1")
+  // {
+  //   Serial.print("Changing Relay 1 output to ");
+  //   if (messageIn == "on")
+  //   {
+  //     Serial.println("on");
+  //     digitalWrite(relay1, HIGH);
+  //   }
+  //   else if (messageIn == "off")
+  //   {
+  //     Serial.println("off");
+  //     digitalWrite(relay1, LOW);
+  //   }
+  // }
+  // if (String(topic) == "juicebox2/relay2")
+  // {
+  //   Serial.print("Changing Relay 2 output to ");
+  //   if (messageIn == "on")
+  //   {
+  //     Serial.println("on");
+  //     digitalWrite(relay2, HIGH);
+  //   }
+  //   else if (messageIn == "off")
+  //   {
+  //     Serial.println("off");
+  //     digitalWrite(relay2, LOW);
+  //   }
+  // }
+  // if (String(topic) == "juicebox2/relay3")
+  // {
+  //   Serial.print("Changing Relay 3 output to ");
+  //   if (messageIn == "on")
+  //   {
+  //     Serial.println("on");
+  //     digitalWrite(relay3, HIGH);
+  //   }
+  //   else if (messageIn == "off")
+  //   {
+  //     Serial.println("off");
+  //     digitalWrite(relay3, LOW);
+  //   }
+  // }
+  // if (String(topic) == "juicebox2/relay6")
+  // {
+  //   Serial.print("Changing Relay 6 output to ");
+  //   if (messageIn == "on")
+  //   {
+  //     Serial.println("on");
+  //     digitalWrite(relay6, HIGH);
+  //   }
+  //   else if (messageIn == "off")
+  //   {
+  //     Serial.println("off");
+  //     digitalWrite(relay6, LOW);
+  //   }
+  // }
 }
 void reconnect()
 {
@@ -129,10 +171,10 @@ void reconnect()
       // Once connected, publish an announcement...
       mqttClient.publish("juicebox2", "hello world");
       // ... and resubscribe
-      mqttClient.subscribe("juicebox2/relay1");
-      mqttClient.subscribe("juicebox2/relay2");
-      mqttClient.subscribe("juicebox2/relay3");
-      // mqttClient.subscribe("juicebox1/relay2");
+      mqttClient.subscribe("juicebox2/#");
+      // mqttClient.subscribe("juicebox2/relay2");
+      // mqttClient.subscribe("juicebox2/relay3");
+      // mqttClient.subscribe("juicebox1/relay6");
     }
     else
     {
@@ -145,28 +187,6 @@ void reconnect()
   }
 }
 
-// void printScales()
-// {
-//   if (scale.wait_ready_timeout(1000))
-//   {
-//     // long reading = scale.read();
-//     long reading = scale.get_units(15);
-//     String readingTempString = String(reading);
-//     char readingMessage[50];
-//     readingTempString.toCharArray(readingMessage, readingTempString.length() + 1);
-//     // String messageToSend = String("{\"tankWeight\": \" "readingString" \" }");
-//     mqttClient.publish("juicebox2/tankWeight", readingMessage);
-//     Serial.print("HX711 reading: ");
-//     Serial.println(reading);
-//   }
-//   else
-//   {
-//     Serial.println("HX711 not found :(");
-//   }
-
-//   // delay(1500);
-// }
-
 void setup()
 {
   // pin setup
@@ -176,6 +196,7 @@ void setup()
   pinMode(relay2, OUTPUT);
   // digitalWrite(relay2, HIGH); // !start relay1 HIGH (Which is off????)
   pinMode(relay3, OUTPUT);
+  pinMode(relay6, OUTPUT);
   // digitalWrite(relay3, HIGH); // !start relay1 HIGH (Which is off????)
   // leds
   // pinMode(greenLed, OUTPUT);
